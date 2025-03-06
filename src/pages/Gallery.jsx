@@ -41,25 +41,29 @@ function Gallery() {
   
 
   if (loading) {
-    return <div className="flex justify-center items-center min-h-screen text-gray-600">Loading gallery...</div>;
+    return <div className="flex justify-center items-center min-h-screen text-gray-300">Loading gallery...</div>;
   }
 
   if (error) {
-    return <div className="flex justify-center items-center min-h-screen text-red-600">{error}</div>;
+    return <div className="flex justify-center items-center min-h-screen text-funeral-accent">{error}</div>;
   }
 
   return (
     <div className="max-w-5xl mx-auto py-8">
-      <h1 className="text-3xl font-bold text-center mb-6">Gallery</h1>
+      <h1 className="text-3xl font-bold text-center text-white mb-6">Gallery</h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 overflow-y-auto h-[600px]">
         {images.length === 0 ? (
-          <div className="flex justify-center items-center col-span-3 text-xl text-gray-500">
+          <div className="flex justify-center items-center col-span-3 text-xl text-gray-300">
             No images available in the gallery.
           </div>
         ) : (
           images.map((image, index) => (
-            <div key={index} className="bg-white rounded-lg shadow-md overflow-hidden">
-              <img src={image.url} alt={image.name} className="w-full h-72 object-cover" />
+            <div key={index} className="bg-funeral-darkest border border-funeral-dark rounded-lg shadow-lg overflow-hidden">
+              <img 
+                src={image.url} 
+                alt={image.name} 
+                className="w-full h-72 object-cover hover:opacity-90 transition-opacity" 
+              />
             </div>
           ))
         )}

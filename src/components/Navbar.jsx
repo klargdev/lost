@@ -33,14 +33,14 @@ export default function Navbar() {
   }, []);
 
   return (
-    <Disclosure as="nav" className="bg-transparent text-[#302104] shadow-lg sticky top-0 z-50 backdrop-blur-md" ref={navbarRef}>
+    <Disclosure as="nav" className="bg-[#040303] bg-opacity-90 text-white shadow-lg sticky top-0 z-50 backdrop-blur-md" ref={navbarRef}>
       {({ open, close }) => (
         <>
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="flex h-16 justify-between">
               <div className="flex">
                 <div className="flex flex-shrink-0 items-center">
-                  <Link to="/" className="text-xl font-bold text-[#302104]">
+                  <Link to="/" className="text-xl font-bold text-white">
                     Memorial
                   </Link>
                 </div>
@@ -51,10 +51,10 @@ export default function Navbar() {
                       to={item.to}
                       className={`inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 ${
                         location.pathname === item.to
-                          ? 'text-[#eedab3] border-[#eedab3]'  // Highlight selected item with color and underline
-                          : 'border-transparent text-gray-900 hover:text-[#eedab3] hover:border-[#eedab3]' // Hover state
+                          ? 'text-white border-[#B3541E]'
+                          : 'border-transparent text-gray-300 hover:text-white hover:border-[#A13333]'
                       }`}
-                      onClick={() => close()}  // Close the navbar when a link is clicked
+                      onClick={() => close()}
                     >
                       {item.name}
                     </Link>
@@ -64,7 +64,7 @@ export default function Navbar() {
               <div className="-mr-2 flex items-center sm:hidden">
                 <Disclosure.Button
                   id="close-navbar-btn"
-                  className="inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-[#1e044a] hover:text-gray-500"
+                  className="inline-flex items-center justify-center rounded-md p-2 text-gray-300 hover:bg-[#461111] hover:text-white"
                 >
                   <span className="sr-only">Open main menu</span>
                   {open ? (
@@ -85,10 +85,10 @@ export default function Navbar() {
                   to={item.to}
                   className={`block px-3 py-4 text-base font-medium ${
                     location.pathname === item.to
-                      ? 'bg-[#eedab3] text-[#302104] border-b-2 border-[#eedab3]'  // Highlight selected item with color and underline
-                      : 'text-gray-700 hover:bg-gray-50 hover:text-[#eedab3] hover:border-b-2 hover:border-[#eedab3]' // Hover state
+                      ? 'bg-[#461111] text-white border-l-4 border-[#B3541E]'
+                      : 'text-gray-300 hover:bg-[#040303] hover:text-white hover:border-l-4 hover:border-[#A13333]'
                   }`}
-                  onClick={() => close()}  // Close the navbar when a link is clicked
+                  onClick={() => close()}
                 >
                   {item.name}
                 </Link>

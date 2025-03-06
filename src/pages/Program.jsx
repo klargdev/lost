@@ -26,21 +26,21 @@ function Program() {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">Memorial Program</h1>
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <h1 className="text-3xl font-bold text-white mb-8">Memorial Program</h1>
+      <div className="bg-funeral-darkest border border-funeral-dark rounded-lg shadow-lg overflow-hidden">
         {schedule.map((item, index) => (
           <div 
             key={index}
             className={`p-6 ${
-              index !== schedule.length - 1 ? 'border-b border-gray-200' : ''
+              index !== schedule.length - 1 ? 'border-b border-funeral-dark' : ''
             }`}
           >
             <div className="flex justify-between items-start">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">{item.event}</h3>
-                <p className="text-gray-600">{item.location}</p>
+                <h3 className="text-lg font-semibold text-white">{item.event}</h3>
+                <p className="text-gray-300">{item.location}</p>
               </div>
-              <span className="text-indigo-600 font-medium">{item.time}</span>
+              <span className="text-funeral-accent font-medium">{item.time}</span>
             </div>
           </div>
         ))}
