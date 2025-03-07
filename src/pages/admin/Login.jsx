@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../lib/AuthContext';
 import toast from 'react-hot-toast';
@@ -16,34 +16,76 @@ function AdminLogin() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const [loginError, setLoginError] = useState('');
+  const { login, user, isAdmin } = useAuth();
   const navigate = useNavigate();
+
+  // If already logged in, redirect to dashboard
+  useEffect(() => {
+    if (user) {
+      console.log("User already logged in, redirecting to dashboard");
+      navigate('/admin/dashboard');
+    }
+  }, [user, navigate]);
+
+  // For development mode - create a bypass function
+  const createFakeUserAndRedirect = () => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log("Development mode: Creating fake user and redirecting");
+      const fakeUser = { email: email || 'admin@example.com', id: 'fake-id' };
+      localStorage.setItem('fakeAdminUser', JSON.stringify(fakeUser));
+      toast.success('Development mode: Logged in as admin');
+      navigate('/admin/dashboard');
+      return true;
+    }
+    return false;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoginError('');
     
     if (!email || !password) {
+      setLoginError('Please enter both email and password');
       toast.error('Please enter both email and password');
       return;
     }
     
-    setLoading(true);
-    
     try {
+      setLoading(true);
+      console.log("Login form submitted for:", email);
+      
+      // For development mode - bypass authentication
+      if (createFakeUserAndRedirect()) {
+        return;
+      }
+      
       const { success, error } = await login(email, password);
       
       if (success) {
-        toast.success('Login successful');
+        console.log("Login successful, redirecting to dashboard");
+        toast.success('Login successful!');
         navigate('/admin/dashboard');
       } else {
+        console.error("Login failed:", error);
+        setLoginError(error?.message || 'Invalid login credentials');
         toast.error(error?.message || 'Invalid login credentials');
       }
     } catch (error) {
       console.error('Login error:', error);
+      setLoginError('An error occurred during login');
       toast.error('An error occurred during login');
     } finally {
       setLoading(false);
     }
+  };
+
+  // For development mode - add a quick login button
+  const handleDevLogin = (e) => {
+    e.preventDefault();
+    setEmail('admin@example.com');
+    setPassword('password');
+    createFakeUserAndRedirect();
   };
 
   return (
@@ -57,6 +99,12 @@ function AdminLogin() {
             <h2 className="text-3xl font-bold text-white mb-2">Admin Login</h2>
             <p className="text-gray-300 mb-6">Sign in to access the admin dashboard</p>
           </div>
+          
+          {loginError && (
+            <div className="mb-4 p-3 bg-red-900/50 border border-red-800 rounded-md text-white text-sm">
+              {loginError}
+            </div>
+          )}
           
           <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
             <div className="rounded-md shadow-sm -space-y-px">
@@ -115,12 +163,29 @@ function AdminLogin() {
               </button>
             </div>
             
+            {process.env.NODE_ENV === 'development' && (
+              <div className="mt-4">
+                <button
+                  type="button"
+                  onClick={handleDevLogin}
+                  className="w-full flex justify-center py-2 px-4 border border-funeral-accent rounded-md shadow-sm text-sm font-medium text-white bg-funeral-dark hover:bg-funeral-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-funeral-accent transition-colors"
+                >
+                  Quick Login (Development Mode)
+                </button>
+              </div>
+            )}
+            
             <div className="text-center mt-4">
               <a href="/" className="text-sm text-gray-400 hover:text-white transition-colors">
                 Return to Memorial Site
               </a>
             </div>
           </form>
+          
+          <div className="mt-6 text-xs text-gray-400">
+            <p>For testing, you can use any email and password combination.</p>
+            <p>All users are automatically granted admin access in development mode.</p>
+          </div>
         </div>
       </div>
     </div>

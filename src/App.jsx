@@ -10,6 +10,13 @@ import Gallery from "./pages/Gallery";
 import Guestbook from "./pages/Guestbook";
 import Donate from "./pages/Donate";
 
+// Admin imports
+import { AuthProvider, RequireAdmin } from "./lib/AuthContext";
+import AdminLogin from "./pages/admin/Login";
+import AdminDashboard from "./pages/admin/Dashboard";
+import GalleryManagement from "./pages/admin/GalleryManagement";
+import GuestbookModeration from "./pages/admin/GuestbookModeration";
+
 // Subtle floral background pattern
 const FloralPattern = () => (
   <div className="fixed inset-0 z-0 pointer-events-none opacity-5">
@@ -27,68 +34,99 @@ const FloralPattern = () => (
 
 function App() {
   return (
-    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-      <div 
-        className="min-h-screen text-gray-100 relative"
-        style={{
-          backgroundColor: '#040303',
-          backgroundImage: 'linear-gradient(rgba(70, 17, 17, 0.9), rgba(4, 3, 3, 0.95))',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat'
-        }}
-      >
-        {/* Floral background pattern */}
-        <FloralPattern />
-        
-        {/* Content */}
-        <div className="relative z-10">
-          <Navbar />
-          <main className="w-full">
+    <AuthProvider>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <div 
+          className="min-h-screen text-gray-100 relative"
+          style={{
+            backgroundColor: '#040303',
+            backgroundImage: 'linear-gradient(rgba(70, 17, 17, 0.9), rgba(4, 3, 3, 0.95))',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat'
+          }}
+        >
+          {/* Floral background pattern */}
+          <FloralPattern />
+          
+          {/* Content */}
+          <div className="relative z-10">
             <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/tribute" element={
-                <div className="container mx-auto px-4 py-8">
-                  <Tribute />
-                </div>
+              {/* Admin Routes */}
+              <Route path="/admin/login" element={<AdminLogin />} />
+              <Route path="/admin/dashboard" element={
+                <RequireAdmin>
+                  <AdminDashboard />
+                </RequireAdmin>
               } />
-              <Route path="/program" element={
-                <div className="container mx-auto px-4 py-8">
-                  <Program />
-                </div>
+              <Route path="/admin/gallery" element={
+                <RequireAdmin>
+                  <AdminDashboard>
+                    <GalleryManagement />
+                  </AdminDashboard>
+                </RequireAdmin>
               } />
-              <Route path="/gallery" element={
-                <div className="container mx-auto px-4 py-8">
-                  <Gallery />
-                </div>
+              <Route path="/admin/guestbook" element={
+                <RequireAdmin>
+                  <AdminDashboard>
+                    <GuestbookModeration />
+                  </AdminDashboard>
+                </RequireAdmin>
               } />
-              <Route path="/guestbook" element={
-                <div className="container mx-auto px-4 py-8">
-                  <Guestbook />
-                </div>
-              } />
-              <Route path="/donate" element={
-                <div className="container mx-auto px-4 py-8">
-                  <Donate />
-                </div>
+              
+              {/* Public Routes */}
+              <Route path="/*" element={
+                <>
+                  <Navbar />
+                  <main className="w-full">
+                    <Routes>
+                      <Route path="/" element={<Home />} />
+                      <Route path="/tribute" element={
+                        <div className="container mx-auto px-4 py-8">
+                          <Tribute />
+                        </div>
+                      } />
+                      <Route path="/program" element={
+                        <div className="container mx-auto px-4 py-8">
+                          <Program />
+                        </div>
+                      } />
+                      <Route path="/gallery" element={
+                        <div className="container mx-auto px-4 py-8">
+                          <Gallery />
+                        </div>
+                      } />
+                      <Route path="/guestbook" element={
+                        <div className="container mx-auto px-4 py-8">
+                          <Guestbook />
+                        </div>
+                      } />
+                      <Route path="/donate" element={
+                        <div className="container mx-auto px-4 py-8">
+                          <Donate />
+                        </div>
+                      } />
+                    </Routes>
+                  </main>
+                  <Footer />
+                </>
               } />
             </Routes>
-          </main>
-          <Footer />
+          </div>
+          
+          <Toaster 
+            position="bottom-right"
+            toastOptions={{
+              style: {
+                background: '#040303',
+                color: '#fff',
+                border: '1px solid #461111'
+              }
+            }}
+          />
         </div>
-        
-        <Toaster 
-          position="bottom-right"
-          toastOptions={{
-            style: {
-              background: '#040303',
-              color: '#fff',
-              border: '1px solid #461111'
-            }
-          }}
-        />
-      </div>
-    </BrowserRouter>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 
