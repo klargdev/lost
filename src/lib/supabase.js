@@ -86,18 +86,29 @@ export const auth = {
   // Check if user is admin (based on user metadata or email)
   isAdmin: async () => {
     try {
-      // For development/testing - always return true
-      if (import.meta.env.MODE === 'development') {
-        return true;
-      }
-      
+      // Get the current user
       const { user, error } = await auth.getUser();
-      if (error || !user) return false;
-      
-      // Check if user has admin role in metadata
-      // You can customize this logic based on your Supabase setup
-      return user.app_metadata?.role === 'admin' || 
-             user.email?.endsWith('@admin.com'); // Simple check for demo purposes
+      if (error || !user) {
+        console.log('No authenticated user found');
+        return false;
+      }
+
+      // List of authorized admin emails
+      const authorizedAdmins = [
+        'kpabitey.gabriel@gmail.com',
+        // Add other admin emails here
+      ];
+
+      // Check if user's email is in the authorized list
+      const isAuthorizedAdmin = authorizedAdmins.includes(user.email);
+
+      if (!isAuthorizedAdmin) {
+        console.log('User is not an authorized admin:', user.email);
+        return false;
+      }
+
+      console.log('Admin access granted for:', user.email);
+      return true;
     } catch (error) {
       console.error("Exception checking admin status:", error);
       return false;
@@ -169,26 +180,17 @@ export const content = {
             
           if (createError) {
             console.error('Error creating bucket:', createError);
-            return { error: createError };
+            // If we get an RLS error, the bucket might already exist
+            if (createError.message.includes('row-level security policy')) {
+              console.log('Bucket might already exist, proceeding...');
+            } else {
+              return { error: createError };
+            }
           }
           
           console.log('Gallery bucket created successfully');
         } else {
           console.log('Gallery bucket already exists');
-        }
-        
-        // Update bucket settings to ensure public access
-        const { error: updateError } = await supabase
-          .storage
-          .updateBucket(bucketName, {
-            public: true,
-            fileSizeLimit: 5242880,
-            allowedMimeTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
-          });
-          
-        if (updateError) {
-          console.error('Error updating bucket settings:', updateError);
-          return { error: updateError };
         }
         
         // Initialize the image_groups table if it doesn't exist
@@ -197,6 +199,11 @@ export const content = {
         return { error: null };
       } catch (error) {
         console.error('Exception initializing gallery bucket:', error);
+        // If we get an RLS error, the bucket might already exist
+        if (error.message && error.message.includes('row-level security policy')) {
+          console.log('Bucket might already exist, proceeding...');
+          return { error: null };
+        }
         return { error };
       }
     },
