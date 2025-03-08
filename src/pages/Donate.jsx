@@ -21,12 +21,7 @@ const PAYMENT_METHODS = {
     logo: mtnLogo,
     bgColor: 'bg-yellow-900',
     borderColor: 'border-yellow-500',
-    // MTN MoMo deep link format
-    getPaymentLink: (amount, reference) => {
-      // For MTN MoMo, we can use a more specific USSD code
-      // *170# is the general code, but we can add parameters
-      // Format: tel:*170*1*RECIPIENT_NUMBER*AMOUNT*REFERENCE#
-      const formattedNumber = MTN_NUMBER.replace(/^0/, '0'); // Convert to international format
+    getPaymentLink: () => {
       return `tel:*170#`;
     }
   },
@@ -37,12 +32,8 @@ const PAYMENT_METHODS = {
     logo: vodafoneLogo,
     bgColor: 'bg-red-900',
     borderColor: 'border-red-500',
-    // Vodafone Cash deep link format
-    getPaymentLink: (amount, reference) => {
-      // For Vodafone Cash, we use their standard USSD code
-      // *110# is the general code, but we can add the specific menu option
-      // The user will still need to navigate the menu, but this gets them started
-      return `tel:*110#`; // *110*7# for money transfer
+    getPaymentLink: () => {
+      return `tel:*110#`;
     }
   },
   AIRTEL_TIGO: {
@@ -52,45 +43,17 @@ const PAYMENT_METHODS = {
     logo: airteltigoLogo,
     bgColor: 'bg-blue-900',
     borderColor: 'border-blue-500',
-    // AirtelTigo Money deep link format
-    getPaymentLink: (amount, reference) => {
-      // For AirtelTigo Money, we use their standard USSD code
-      // *500# is the general code, but we can add the specific menu option
-      // The user will still need to navigate the menu, but this gets them started
-      return `tel:*110#`; // *500*1# for money transfer
+    getPaymentLink: () => {
+      return `tel:*500#`;
     }
   }
 };
 
 function Donate() {
-  const [name, setName] = useState('');
-  const [amount, setAmount] = useState('');
-  const [reference] = useState(`T-${Math.floor(1000 + Math.random() * 9000)}`);
-
   const handlePaymentClick = (paymentMethod) => {
-    if (!amount || amount <= 0) {
-      toast.error('Please enter a valid donation amount');
-      return;
-    }
-
     // Get the payment link for the selected method
-    const paymentLink = PAYMENT_METHODS[paymentMethod].getPaymentLink(amount, reference);
+    const paymentLink = PAYMENT_METHODS[paymentMethod].getPaymentLink();
     
-    // Log the payment attempt
-    try {
-      supabase.from('donations').insert([
-        {
-          amount: parseInt(amount),
-          donor_name: name || 'Anonymous',
-          payment_status: 'initiated',
-          payment_id: reference,
-          payment_method: paymentMethod
-        }
-      ]);
-    } catch (error) {
-      console.error('Error logging payment attempt:', error);
-    }
-
     // Open the payment link
     window.location.href = paymentLink;
   };
@@ -102,43 +65,6 @@ function Donate() {
         <p className="text-gray-300 mb-2">
           Your contribution helps honor their memory and support their legacy.
         </p>
-        <p className="text-gray-400 text-sm">
-          Your reference code: <span className="font-mono font-bold text-yellow-400">{reference}</span>
-        </p>
-      </div>
-
-      {/* Donation form */}
-      <div className="bg-funeral-darkest border border-funeral-dark rounded-lg shadow-lg p-6 mb-8">
-        <div className="mb-4">
-          <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-1">
-            Your Name (Optional)
-          </label>
-          <input
-            type="text"
-            id="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="w-full px-3 py-2 bg-gray-100 border border-funeral-dark text-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-funeral-accent"
-            placeholder="Enter your name"
-          />
-        </div>
-
-        <div className="mb-6">
-          <label htmlFor="amount" className="block text-sm font-medium text-gray-300 mb-1">
-            Donation Amount (GHS)
-          </label>
-          <input
-            type="number"
-            id="amount"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            min="1"
-            step="1"
-            className="w-full px-3 py-2 bg-gray-100 border border-funeral-dark text-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-funeral-accent"
-            placeholder="Enter amount"
-            required
-          />
-        </div>
       </div>
 
       {/* Payment options */}
@@ -176,11 +102,11 @@ function Donate() {
       <div className="bg-funeral-darkest border border-funeral-dark rounded-lg shadow-lg p-6 mb-8">
         <h3 className="text-lg font-semibold text-white mb-3">How to Donate</h3>
         <ol className="list-decimal pl-5 text-gray-300 space-y-2">
-          <li>Enter your donation amount above</li>
           <li>Click on your preferred mobile money provider</li>
-          <li>Your phone will open the payment app or USSD code</li>
+          <li>Your phone will open the payment USSD code</li>
           <li>Follow the prompts to complete your payment</li>
-          <li>Use the reference code <span className="font-mono font-bold text-yellow-400">{reference}</span> when prompted</li>
+          <li>Enter the amount you wish to donate</li>
+          <li>Enter your name as reference (optional)</li>
         </ol>
       </div>
 
