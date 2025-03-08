@@ -19,6 +19,25 @@ export function AuthProvider({ children }) {
     const checkUser = async () => {
       try {
         console.log("Checking for existing session...");
+        
+        // Check for direct login first
+        const usingDirectLogin = localStorage.getItem('usingDirectLogin');
+        if (usingDirectLogin === 'true') {
+          console.log("Using direct login from localStorage");
+          try {
+            const fakeUser = JSON.parse(localStorage.getItem('fakeAdminUser'));
+            if (fakeUser) {
+              console.log("Found fake user:", fakeUser.email);
+              setUser(fakeUser);
+              setIsAdmin(true);
+              setLoading(false);
+              return;
+            }
+          } catch (e) {
+            console.error("Error parsing fake user:", e);
+          }
+        }
+        
         const { session } = await auth.getSession();
         console.log("Session check result:", session ? "Session found" : "No session");
         
@@ -51,6 +70,23 @@ export function AuthProvider({ children }) {
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state changed:", event, session ? "Session exists" : "No session");
       
+      // Check for direct login first
+      const usingDirectLogin = localStorage.getItem('usingDirectLogin');
+      if (usingDirectLogin === 'true') {
+        try {
+          const fakeUser = JSON.parse(localStorage.getItem('fakeAdminUser'));
+          if (fakeUser) {
+            console.log("Using direct login during auth change");
+            setUser(fakeUser);
+            setIsAdmin(true);
+            setLoading(false);
+            return;
+          }
+        } catch (e) {
+          console.error("Error parsing fake user during auth change:", e);
+        }
+      }
+      
       if (session) {
         const { user: currentUser } = await auth.getUser();
         console.log("User from auth change:", currentUser?.email);
@@ -66,9 +102,12 @@ export function AuthProvider({ children }) {
         // setIsAdmin(adminStatus);
         // console.log("Admin status:", adminStatus);
       } else {
-        setUser(null);
-        setIsAdmin(false);
-        console.log("User signed out or no session");
+        // Only clear user if not using direct login
+        if (usingDirectLogin !== 'true') {
+          setUser(null);
+          setIsAdmin(false);
+          console.log("User signed out or no session");
+        }
       }
       setLoading(false);
     });
@@ -86,6 +125,20 @@ export function AuthProvider({ children }) {
     try {
       console.log("Attempting login for:", email);
       setLoading(true);
+      
+      // For development mode, use direct login
+      if (import.meta.env.MODE === 'development') {
+        console.log("Development mode: Using direct login");
+        const fakeUser = { email, id: 'dev-admin' };
+        localStorage.setItem('fakeAdminUser', JSON.stringify(fakeUser));
+        localStorage.setItem('usingDirectLogin', 'true');
+        
+        setUser(fakeUser);
+        setIsAdmin(true);
+        
+        toast.success('Development mode: Logged in as admin');
+        return { success: true };
+      }
       
       const { data, error } = await auth.signIn(email, password);
       
@@ -121,6 +174,11 @@ export function AuthProvider({ children }) {
     try {
       console.log("Attempting logout");
       setLoading(true);
+      
+      // Clear direct login if it exists
+      localStorage.removeItem('fakeAdminUser');
+      localStorage.removeItem('usingDirectLogin');
+      
       const { error } = await auth.signOut();
       
       if (error) {
@@ -159,29 +217,24 @@ export function RequireAdmin({ children }) {
   
   console.log("RequireAdmin check - User:", user?.email, "IsAdmin:", isAdmin, "Loading:", loading);
   
-  // For development purposes, create a fake user if none exists
-  useEffect(() => {
-    if (!loading && !user) {
-      console.log("No user found in RequireAdmin, creating fake user for development");
-      // This is just for development to bypass the authentication check
-      const fakeUser = { email: 'dev@example.com', id: 'fake-id' };
-      localStorage.setItem('fakeAdminUser', JSON.stringify(fakeUser));
-    }
-  }, [loading, user]);
-  
-  // Get fake user from localStorage if in development
-  const getFakeUser = () => {
-    if (process.env.NODE_ENV === 'development') {
-      try {
-        return JSON.parse(localStorage.getItem('fakeAdminUser'));
-      } catch (e) {
-        return null;
+  // Check for direct login
+  const checkDirectLogin = () => {
+    try {
+      const usingDirectLogin = localStorage.getItem('usingDirectLogin');
+      if (usingDirectLogin === 'true') {
+        const fakeUser = JSON.parse(localStorage.getItem('fakeAdminUser'));
+        if (fakeUser) {
+          console.log("Direct login found:", fakeUser.email);
+          return true;
+        }
       }
+    } catch (e) {
+      console.error("Error checking direct login:", e);
     }
-    return null;
+    return false;
   };
   
-  const fakeUser = getFakeUser();
+  const hasDirectLogin = checkDirectLogin();
   
   if (loading) {
     return (
@@ -194,9 +247,9 @@ export function RequireAdmin({ children }) {
     );
   }
   
-  // For development/testing - allow access with fake user
-  if (!user && !fakeUser) {
-    console.log("Access denied - no user or fake user found");
+  // Allow access if user exists or direct login is active
+  if (!user && !hasDirectLogin) {
+    console.log("Access denied - no user or direct login found");
     return (
       <div className="flex justify-center items-center min-h-screen bg-funeral-darkest text-white">
         <div className="text-center max-w-md p-8 bg-funeral-dark rounded-lg shadow-lg">

@@ -1,5 +1,5 @@
-import React from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import React, { useEffect } from "react";
+import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
@@ -17,6 +17,9 @@ import AdminDashboard from "./pages/admin/Dashboard";
 import GalleryManagement from "./pages/admin/GalleryManagement";
 import GuestbookModeration from "./pages/admin/GuestbookModeration";
 
+// Supabase imports
+import { ensureStorageBucketExists } from "./lib/supabase";
+
 // Subtle floral background pattern
 const FloralPattern = () => (
   <div className="fixed inset-0 z-0 pointer-events-none opacity-5">
@@ -33,6 +36,26 @@ const FloralPattern = () => (
 );
 
 function App() {
+  // Initialize Supabase storage bucket when the app starts
+  useEffect(() => {
+    const initializeStorage = async () => {
+      try {
+        console.log("Initializing Supabase storage...");
+        const { success, error } = await ensureStorageBucketExists();
+        
+        if (success) {
+          console.log("Supabase storage initialized successfully");
+        } else {
+          console.error("Failed to initialize Supabase storage:", error);
+        }
+      } catch (error) {
+        console.error("Error initializing Supabase storage:", error);
+      }
+    };
+    
+    initializeStorage();
+  }, []);
+
   return (
     <AuthProvider>
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
@@ -54,25 +77,16 @@ function App() {
             <Routes>
               {/* Admin Routes */}
               <Route path="/admin/login" element={<AdminLogin />} />
-              <Route path="/admin/dashboard" element={
+              <Route path="/admin" element={
                 <RequireAdmin>
                   <AdminDashboard />
+                  <Outlet />
                 </RequireAdmin>
-              } />
-              <Route path="/admin/gallery" element={
-                <RequireAdmin>
-                  <AdminDashboard>
-                    <GalleryManagement />
-                  </AdminDashboard>
-                </RequireAdmin>
-              } />
-              <Route path="/admin/guestbook" element={
-                <RequireAdmin>
-                  <AdminDashboard>
-                    <GuestbookModeration />
-                  </AdminDashboard>
-                </RequireAdmin>
-              } />
+              }>
+                <Route path="dashboard" element={null} />
+                <Route path="gallery" element={<GalleryManagement />} />
+                <Route path="guestbook" element={<GuestbookModeration />} />
+              </Route>
               
               {/* Public Routes */}
               <Route path="/*" element={

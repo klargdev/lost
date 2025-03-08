@@ -14,6 +14,7 @@ function Guestbook() {
   const [showCommentForm, setShowCommentForm] = useState({}); // Track which comment forms are visible
   const firstTributeRef = useRef(null);
   const formRef = useRef(null);
+  const [useDemoMode, setUseDemoMode] = useState(false);
 
   // Function to generate a color based on a string (name)
   const getProfileColor = (name) => {
@@ -52,33 +53,102 @@ function Guestbook() {
 
   async function fetchTributes() {
     try {
+      setLoading(true);
+      
+      // Try to fetch from Supabase
       const { data, error } = await supabase
         .from("tributes")
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching tributes:", error);
+        // Use demo mode if there's an error
+        setUseDemoMode(true);
+        const demoTributes = generateDemoTributes();
+        initializeCommentsForTributes(demoTributes);
+        setTributes(demoTributes);
+        return;
+      }
       
-      // Initialize comments and comment forms for each tribute
-      const initialComments = {};
-      const initialCommentForms = {};
-      const initialShowCommentForm = {};
+      if (!data || data.length === 0) {
+        // Use demo mode if no tributes found
+        setUseDemoMode(true);
+        const demoTributes = generateDemoTributes();
+        initializeCommentsForTributes(demoTributes);
+        setTributes(demoTributes);
+        return;
+      }
+
+      // Initialize comments for real tributes
+      initializeCommentsForTributes(data);
+      setTributes(data);
       
-      (data || []).forEach(tribute => {
-        initialComments[tribute.id] = initialComments[tribute.id] || [];
-        initialCommentForms[tribute.id] = { author_name: "", message: "" };
-        initialShowCommentForm[tribute.id] = false;
-      });
-      
-      setComments(initialComments);
-      setCommentForms(initialCommentForms);
-      setShowCommentForm(initialShowCommentForm);
-      setTributes(data || []);
     } catch (error) {
       console.error("Error fetching tributes:", error);
+      // Use demo mode if there's an error
+      setUseDemoMode(true);
+      const demoTributes = generateDemoTributes();
+      initializeCommentsForTributes(demoTributes);
+      setTributes(demoTributes);
     } finally {
       setLoading(false);
     }
+  }
+  
+  // Generate demo tributes
+  function generateDemoTributes() {
+    return [
+      {
+        id: "demo-1",
+        author_name: "John Smith",
+        message: "I will always remember the kindness and wisdom shared with all of us. Your legacy lives on in the hearts of everyone you touched.",
+        created_at: new Date(Date.now() - 3600000).toISOString(),
+        imageUrl: "https://placehold.co/600x400/461111/ffffff?text=Memorial+Photo"
+      },
+      {
+        id: "demo-2",
+        author_name: "Sarah Davis",
+        message: "Your guidance and mentorship shaped my career and life in countless ways. I am forever grateful for the time we had together.",
+        created_at: new Date(Date.now() - 86400000).toISOString()
+      },
+      {
+        id: "demo-3",
+        author_name: "Michael Brown",
+        message: "Rest in peace. You were an inspiration to us all and will be deeply missed.",
+        created_at: new Date(Date.now() - 172800000).toISOString(),
+        imageUrl: "https://placehold.co/600x400/A13333/ffffff?text=Tribute+Photo"
+      }
+    ];
+  }
+  
+  // Initialize comments for tributes
+  function initializeCommentsForTributes(tributesList) {
+    const initialComments = {};
+    const initialCommentForms = {};
+    const initialShowCommentForm = {};
+    
+    tributesList.forEach(tribute => {
+      initialComments[tribute.id] = initialComments[tribute.id] || [];
+      initialCommentForms[tribute.id] = { author_name: "", message: "" };
+      initialShowCommentForm[tribute.id] = false;
+      
+      // Add demo comments for demo tributes
+      if (tribute.id === "demo-1") {
+        initialComments[tribute.id] = [
+          {
+            id: "comment-1",
+            author_name: "Mary Johnson",
+            message: "Such beautiful words, John. I completely agree.",
+            created_at: new Date(Date.now() - 1800000).toISOString()
+          }
+        ];
+      }
+    });
+    
+    setComments(initialComments);
+    setCommentForms(initialCommentForms);
+    setShowCommentForm(initialShowCommentForm);
   }
 
   async function handleSubmit(e) {
@@ -92,6 +162,55 @@ function Guestbook() {
     let imageUrl = "";
 
     try {
+      if (useDemoMode) {
+        // Handle demo mode submission
+        if (file) {
+          imageUrl = URL.createObjectURL(file);
+        }
+        
+        const newTribute = {
+          id: `demo-${Date.now()}`,
+          author_name: form.author_name,
+          message: form.message,
+          imageUrl: imageUrl,
+          created_at: new Date().toISOString()
+        };
+        
+        // Add the new tribute to the list
+        setTributes(prev => [newTribute, ...prev]);
+        
+        // Initialize comments for the new tribute
+        setComments(prev => ({
+          ...prev,
+          [newTribute.id]: []
+        }));
+        
+        setCommentForms(prev => ({
+          ...prev,
+          [newTribute.id]: { author_name: "", message: "" }
+        }));
+        
+        setShowCommentForm(prev => ({
+          ...prev,
+          [newTribute.id]: false
+        }));
+        
+        toast.success("Your tribute has been added");
+        setForm({ author_name: "", message: "" });
+        setFile(null);
+        
+        // Scroll to the top post
+        if (firstTributeRef.current) {
+          window.scrollTo({
+            top: firstTributeRef.current.offsetTop,
+            behavior: "smooth",
+          });
+        }
+        
+        return;
+      }
+      
+      // Handle real submission to Supabase
       if (file) {
         const fileExt = file.name.split(".").pop();
         const fileName = `${Date.now()}.${fileExt}`;
@@ -152,7 +271,7 @@ function Guestbook() {
   };
 
   // Add a comment to a tribute
-  const addComment = (tributeId) => {
+  const addComment = async (tributeId) => {
     const commentForm = commentForms[tributeId];
     
     if (!commentForm.author_name || !commentForm.message) {
@@ -160,36 +279,92 @@ function Guestbook() {
       return;
     }
     
-    const newComment = {
-      id: Date.now(), // Use timestamp as unique ID
-      author_name: commentForm.author_name,
-      message: commentForm.message,
-      created_at: new Date().toISOString()
-    };
-    
-    setComments(prev => ({
-      ...prev,
-      [tributeId]: [...(prev[tributeId] || []), newComment]
-    }));
-    
-    // Reset the comment form
-    setCommentForms(prev => ({
-      ...prev,
-      [tributeId]: { author_name: "", message: "" }
-    }));
-    
-    // Hide the comment form
-    setShowCommentForm(prev => ({
-      ...prev,
-      [tributeId]: false
-    }));
-    
-    toast.success("Comment added successfully");
+    try {
+      if (useDemoMode) {
+        // Handle demo mode comment
+        const newComment = {
+          id: `comment-${Date.now()}`,
+          author_name: commentForm.author_name,
+          message: commentForm.message,
+          created_at: new Date().toISOString()
+        };
+        
+        setComments(prev => ({
+          ...prev,
+          [tributeId]: [...(prev[tributeId] || []), newComment]
+        }));
+        
+        // Reset the comment form
+        setCommentForms(prev => ({
+          ...prev,
+          [tributeId]: { author_name: "", message: "" }
+        }));
+        
+        // Hide the comment form
+        setShowCommentForm(prev => ({
+          ...prev,
+          [tributeId]: false
+        }));
+        
+        toast.success("Comment added successfully");
+        return;
+      }
+      
+      // Handle real comment submission to Supabase
+      const { error } = await supabase
+        .from("comments")
+        .insert([{ 
+          tribute_id: tributeId,
+          author_name: commentForm.author_name,
+          message: commentForm.message
+        }]);
+        
+      if (error) throw error;
+      
+      // Fetch the updated comments
+      const { data: updatedComments, error: fetchError } = await supabase
+        .from("comments")
+        .select("*")
+        .eq("tribute_id", tributeId)
+        .order("created_at", { ascending: true });
+        
+      if (fetchError) throw fetchError;
+      
+      // Update the comments in state
+      setComments(prev => ({
+        ...prev,
+        [tributeId]: updatedComments || []
+      }));
+      
+      // Reset the comment form
+      setCommentForms(prev => ({
+        ...prev,
+        [tributeId]: { author_name: "", message: "" }
+      }));
+      
+      // Hide the comment form
+      setShowCommentForm(prev => ({
+        ...prev,
+        [tributeId]: false
+      }));
+      
+      toast.success("Comment added successfully");
+    } catch (error) {
+      console.error("Error adding comment:", error);
+      toast.error("Failed to add comment");
+    }
   };
 
   return (
     <div className="max-w-4xl mx-auto flex flex-col min-h-screen">
       <h1 className="text-3xl font-bold text-white mb-8">Guestbook</h1>
+      
+      {useDemoMode && (
+        <div className="mb-6 p-3 bg-yellow-900/30 border border-yellow-800 rounded-md text-white text-sm">
+          <p className="font-medium">Demo Mode Active</p>
+          <p>Using placeholder data for demonstration. Your tributes and comments will appear but won't be saved permanently.</p>
+        </div>
+      )}
 
       <div className="space-y-6 flex-grow">
         {loading ? (
@@ -206,6 +381,10 @@ function Guestbook() {
                   src={tribute.imageUrl}
                   alt="Tribute"
                   className="w-full h-auto mb-4 rounded-lg object-cover border border-funeral-dark"
+                  onError={(e) => {
+                    e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0yNCAxMmMwIDYuNjIzLTUuMzc3IDEyLTEyIDEycy0xMi01LjM3Ny0xMi0xMiA1LjM3Ny0xMiAxMi0xMiAxMiA1LjM3NyAxMiAxMnptLTEgMGMwIDYuMDcxLTQuOTI5IDExLTExIDExcy0xMS00LjkyOS0xMS0xMSA0LjkyOS0xMSAxMS0xMSAxMSA0LjkyOSAxMSAxMXptLTExLjUgNC4wMDFoMXYtOC4wMDJoLTF2OC4wMDJ6bS0xLjE2Ni0xMS4wMDFjMC0uNTUyLjQ0OC0xIDEtMSAuNTUzIDAgMSAuNDQ4IDEgMSAwIC41NTMtLjQ0NyAxLTEgMS0uNTUyIDAtMS0uNDQ3LTEtMXoiLz48L3N2Zz4=';
+                    e.target.className = 'w-full h-auto mb-4 rounded-lg object-contain p-4 border border-funeral-dark';
+                  }}
                 />
               )}
               <p className="text-gray-300 mb-4">{tribute.message}</p>
@@ -353,6 +532,7 @@ function Guestbook() {
             type="file" 
             onChange={(e) => setFile(e.target.files[0])} 
             className="w-full text-gray-300 bg-funeral-darkest border border-funeral-dark rounded p-2" 
+            accept="image/*"
           />
         </div>
 

@@ -1,0 +1,86 @@
+/* Gallery container */
+.gallery-container {
+  min-height: calc(100vh - 4rem);
+}
+
+/* Image aspect ratio container */
+.aspect-w-4 {
+  position: relative;
+  padding-bottom: 75%; /* 4:3 aspect ratio */
+}
+
+.aspect-w-4 > * {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+
+/* Image hover effects */
+.group:hover .group-hover\:bg-opacity-20 {
+  --tw-bg-opacity: 0.2;
+}
+
+/* Loading spinner animation */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Fade in animation for images */
+.gallery-image {
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.gallery-image.loaded {
+  opacity: 1;
+}
+
+/* Error state styling */
+.image-error {
+  background-color: rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+/* Group filter buttons hover effect */
+.filter-button {
+  transition: all 0.2s ease-in-out;
+}
+
+.filter-button:hover {
+  transform: translateY(-1px);
+}
+
+/* Image caption truncate with ellipsis */
+.image-caption {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Responsive grid adjustments */
+@media (max-width: 640px) {
+  .grid {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1025px) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

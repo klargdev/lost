@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../lib/AuthContext';
 import toast from 'react-hot-toast';
@@ -8,14 +8,48 @@ function AdminDashboard() {
   const location = useLocation();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [adminEmail, setAdminEmail] = useState('');
+
+  // Get admin info from direct login if needed
+  useEffect(() => {
+    try {
+      // Check if we're using direct login
+      const usingDirectLogin = localStorage.getItem('usingDirectLogin');
+      if (usingDirectLogin === 'true') {
+        const fakeUser = JSON.parse(localStorage.getItem('fakeAdminUser'));
+        if (fakeUser && fakeUser.email) {
+          setAdminEmail(fakeUser.email);
+        }
+      } else if (user && user.email) {
+        setAdminEmail(user.email);
+      } else {
+        setAdminEmail('Admin User');
+      }
+    } catch (e) {
+      console.error("Error getting admin info:", e);
+      setAdminEmail('Admin User');
+    }
+  }, [user]);
 
   const handleLogout = async () => {
-    const { success } = await logout();
-    if (success) {
-      toast.success('Logged out successfully');
+    try {
+      // Clear direct login if it exists
+      localStorage.removeItem('fakeAdminUser');
+      localStorage.removeItem('usingDirectLogin');
+      
+      const { success } = await logout();
+      if (success) {
+        toast.success('Logged out successfully');
+        navigate('/admin/login');
+      } else {
+        toast.error('Failed to log out');
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.error('Error during logout');
+      
+      // Force redirect to login page
       navigate('/admin/login');
-    } else {
-      toast.error('Failed to log out');
     }
   };
 
@@ -65,7 +99,7 @@ function AdminDashboard() {
             <div className="hidden md:block">
               <div className="flex items-center">
                 <span className="text-sm text-gray-300 mr-4">
-                  {user?.email}
+                  {adminEmail}
                 </span>
                 <button
                   onClick={handleLogout}
@@ -121,7 +155,7 @@ function AdminDashboard() {
               ))}
               <div className="border-t border-funeral-medium pt-2 mt-2">
                 <div className="px-3 py-2 text-sm text-gray-300">
-                  {user?.email}
+                  {adminEmail}
                 </div>
                 <button
                   onClick={handleLogout}

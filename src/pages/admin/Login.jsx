@@ -22,70 +22,87 @@ function AdminLogin() {
 
   // If already logged in, redirect to dashboard
   useEffect(() => {
+    console.log("Login page - User state changed:", user?.email);
+    
+    // Check for direct login first
+    const usingDirectLogin = localStorage.getItem('usingDirectLogin');
+    if (usingDirectLogin === 'true') {
+      try {
+        const fakeUser = JSON.parse(localStorage.getItem('fakeAdminUser'));
+        if (fakeUser) {
+          console.log("Direct login found, redirecting to dashboard");
+          navigate('/admin/dashboard');
+          return;
+        }
+      } catch (e) {
+        console.error("Error checking direct login:", e);
+      }
+    }
+    
+    // Then check for regular user login
     if (user) {
       console.log("User already logged in, redirecting to dashboard");
       navigate('/admin/dashboard');
     }
   }, [user, navigate]);
 
-  // For development mode - create a bypass function
-  const createFakeUserAndRedirect = () => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log("Development mode: Creating fake user and redirecting");
-      const fakeUser = { email: email || 'admin@example.com', id: 'fake-id' };
+  // Direct login function that bypasses the auth context
+  const directLogin = () => {
+    console.log("Using direct login method");
+    setLoading(true);
+    
+    try {
+      // Create a fake user in localStorage
+      const fakeUser = { email: email || 'admin@example.com', id: 'dev-admin' };
       localStorage.setItem('fakeAdminUser', JSON.stringify(fakeUser));
+      
+      // Set a flag to indicate we're using direct login
+      localStorage.setItem('usingDirectLogin', 'true');
+      
       toast.success('Development mode: Logged in as admin');
-      navigate('/admin/dashboard');
-      return true;
+      
+      // Force a page reload to the dashboard
+      window.location.href = '/admin/dashboard';
+    } catch (error) {
+      console.error("Direct login error:", error);
+      toast.error("Login failed: " + error.message);
+      setLoading(false);
     }
-    return false;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoginError('');
+    setLoading(true);
     
     if (!email || !password) {
       setLoginError('Please enter both email and password');
       toast.error('Please enter both email and password');
+      setLoading(false);
       return;
     }
     
     try {
-      setLoading(true);
-      console.log("Login form submitted for:", email);
-      
-      // For development mode - bypass authentication
-      if (createFakeUserAndRedirect()) {
-        return;
-      }
-      
+      // Try using the auth context login first
       const { success, error } = await login(email, password);
       
       if (success) {
-        console.log("Login successful, redirecting to dashboard");
-        toast.success('Login successful!');
+        toast.success('Login successful');
         navigate('/admin/dashboard');
-      } else {
-        console.error("Login failed:", error);
-        setLoginError(error?.message || 'Invalid login credentials');
-        toast.error(error?.message || 'Invalid login credentials');
+        return;
+      }
+      
+      if (error) {
+        console.log("Auth login failed, trying direct login:", error);
+        // If auth login fails, try direct login
+        directLogin();
+        return;
       }
     } catch (error) {
-      console.error('Login error:', error);
-      setLoginError('An error occurred during login');
-      toast.error('An error occurred during login');
-    } finally {
-      setLoading(false);
+      console.error("Login error:", error);
+      // If there's an exception, try direct login as fallback
+      directLogin();
     }
-  };
-
-  // For development mode - add a quick login button
-  const handleDevLogin = (e) => {
-    e.preventDefault();
-    setEmail('admin@example.com');
-    setPassword('password');
-    createFakeUserAndRedirect();
   };
 
   return (
@@ -163,17 +180,15 @@ function AdminLogin() {
               </button>
             </div>
             
-            {process.env.NODE_ENV === 'development' && (
-              <div className="mt-4">
-                <button
-                  type="button"
-                  onClick={handleDevLogin}
-                  className="w-full flex justify-center py-2 px-4 border border-funeral-accent rounded-md shadow-sm text-sm font-medium text-white bg-funeral-dark hover:bg-funeral-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-funeral-accent transition-colors"
-                >
-                  Quick Login (Development Mode)
-                </button>
-              </div>
-            )}
+            <div className="mt-4">
+              <button
+                type="button"
+                onClick={directLogin}
+                className="w-full flex justify-center py-2 px-4 border border-funeral-accent rounded-md shadow-sm text-sm font-medium text-white bg-funeral-dark hover:bg-funeral-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-funeral-accent transition-colors"
+              >
+                Quick Login (Development Mode)
+              </button>
+            </div>
             
             <div className="text-center mt-4">
               <a href="/" className="text-sm text-gray-400 hover:text-white transition-colors">

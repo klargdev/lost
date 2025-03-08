@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <circle cx="100" cy="100" r="90" fill="#E60000" />
+  <text x="100" y="105" font-family="Arial, sans-serif" font-size="28" font-weight="bold" text-anchor="middle" fill="#FFF">Vodafone</text>
+  <text x="100" y="135" font-family="Arial, sans-serif" font-size="20" font-weight="bold" text-anchor="middle" fill="#FFF">Cash</text>
+</svg> 

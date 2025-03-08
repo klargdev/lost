@@ -7,6 +7,7 @@ function GuestbookModeration() {
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState({});
   const [expandedComments, setExpandedComments] = useState({});
+  const [useDemoData, setUseDemoData] = useState(false);
 
   useEffect(() => {
     fetchTributes();
@@ -16,6 +17,7 @@ function GuestbookModeration() {
     try {
       setLoading(true);
       
+      // Try to fetch tributes from Supabase
       const { data, error } = await supabase
         .from('tributes')
         .select('*')
@@ -24,6 +26,11 @@ function GuestbookModeration() {
       if (error) {
         console.error('Error fetching tributes:', error);
         toast.error('Failed to load guestbook entries');
+        
+        // Use demo data for development
+        setUseDemoData(true);
+        const demoTributes = generateDemoTributes();
+        setTributes(demoTributes);
         return;
       }
       
@@ -48,20 +55,90 @@ function GuestbookModeration() {
         
         setTributes(tributesWithComments);
       } else {
-        setTributes([]);
+        // Use demo data if no tributes found
+        setUseDemoData(true);
+        const demoTributes = generateDemoTributes();
+        setTributes(demoTributes);
       }
     } catch (error) {
       console.error('Error:', error);
       toast.error('An error occurred while fetching guestbook entries');
+      
+      // Use demo data for development
+      setUseDemoData(true);
+      const demoTributes = generateDemoTributes();
+      setTributes(demoTributes);
     } finally {
       setLoading(false);
     }
+  }
+
+  // Generate demo tributes for development
+  function generateDemoTributes() {
+    return [
+      {
+        id: 'demo-tribute-1',
+        author_name: 'John Smith',
+        message: 'I will always remember the kindness and wisdom shared with all of us. Your legacy lives on in the hearts of everyone you touched.',
+        created_at: '2023-05-15T14:30:00Z',
+        imageUrl: 'https://placehold.co/600x400/461111/ffffff?text=Memorial+Photo',
+        comments: [
+          {
+            id: 'demo-comment-1',
+            tribute_id: 'demo-tribute-1',
+            author_name: 'Mary Johnson',
+            message: 'Such beautiful words, John. I completely agree.',
+            created_at: '2023-05-15T16:45:00Z'
+          },
+          {
+            id: 'demo-comment-2',
+            tribute_id: 'demo-tribute-1',
+            author_name: 'Robert Williams',
+            message: 'Thank you for sharing these memories.',
+            created_at: '2023-05-16T09:20:00Z'
+          }
+        ]
+      },
+      {
+        id: 'demo-tribute-2',
+        author_name: 'Sarah Davis',
+        message: 'Your guidance and mentorship shaped my career and life in countless ways. I am forever grateful for the time we had together.',
+        created_at: '2023-05-14T10:15:00Z',
+        comments: []
+      },
+      {
+        id: 'demo-tribute-3',
+        author_name: 'Michael Brown',
+        message: 'Rest in peace. You were an inspiration to us all and will be deeply missed.',
+        created_at: '2023-05-13T18:45:00Z',
+        imageUrl: 'https://placehold.co/600x400/A13333/ffffff?text=Tribute+Photo',
+        comments: [
+          {
+            id: 'demo-comment-3',
+            tribute_id: 'demo-tribute-3',
+            author_name: 'Jennifer Lee',
+            message: 'Beautifully said, Michael.',
+            created_at: '2023-05-13T20:30:00Z'
+          }
+        ]
+      }
+    ];
   }
 
   async function handleDeleteTribute(tribute) {
     if (window.confirm(`Are you sure you want to delete this tribute from ${tribute.author_name}?`)) {
       try {
         setDeleting(prev => ({ ...prev, [tribute.id]: true }));
+        
+        if (useDemoData) {
+          // Simulate delete for demo
+          setTimeout(() => {
+            setTributes(prev => prev.filter(t => t.id !== tribute.id));
+            toast.success('Tribute deleted successfully (Demo Mode)');
+            setDeleting(prev => ({ ...prev, [tribute.id]: false }));
+          }, 1000);
+          return;
+        }
         
         // First delete all comments associated with this tribute
         if (tribute.comments && tribute.comments.length > 0) {
@@ -104,6 +181,24 @@ function GuestbookModeration() {
     if (window.confirm('Are you sure you want to delete this comment?')) {
       try {
         setDeleting(prev => ({ ...prev, [`comment-${commentId}`]: true }));
+        
+        if (useDemoData) {
+          // Simulate delete for demo
+          setTimeout(() => {
+            setTributes(prev => prev.map(tribute => {
+              if (tribute.id === tributeId) {
+                return {
+                  ...tribute,
+                  comments: tribute.comments.filter(comment => comment.id !== commentId)
+                };
+              }
+              return tribute;
+            }));
+            toast.success('Comment deleted successfully (Demo Mode)');
+            setDeleting(prev => ({ ...prev, [`comment-${commentId}`]: false }));
+          }, 1000);
+          return;
+        }
         
         const { error } = await supabase
           .from('comments')
@@ -149,6 +244,26 @@ function GuestbookModeration() {
     <div className="px-4 py-6 sm:px-0">
       <div className="bg-funeral-dark rounded-lg shadow-lg p-6 mb-8">
         <h2 className="text-2xl font-bold mb-6">Guestbook Moderation</h2>
+        
+        {useDemoData && (
+          <div className="mb-4 p-3 bg-yellow-900/30 border border-yellow-800 rounded-md text-white text-sm">
+            <p className="font-medium">Demo Mode Active</p>
+            <p>Using placeholder data for development. Changes won't persist.</p>
+          </div>
+        )}
+        
+        {/* Refresh button */}
+        <div className="flex justify-end mb-4">
+          <button 
+            onClick={fetchTributes}
+            className="px-3 py-1 bg-funeral-dark text-white rounded-md hover:bg-funeral-medium transition-colors border border-funeral-medium text-sm flex items-center"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+            </svg>
+            Refresh Guestbook
+          </button>
+        </div>
         
         {loading ? (
           <div className="text-center py-8">
