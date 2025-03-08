@@ -1,7 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Hardcoded Supabase credentials (for development only)
+const supabaseUrl = 'https://szhvcthgozkfttnhzbqt.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN6aHZjdGhnb3prZnR0bmh6YnF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDk4MzA3NzYsImV4cCI6MjAyNTQwNjc3Nn0.Nh83ebqzf9Yt_1iHLJckxbv-R4QgbqGGlgcjXYPEL-E';
 
 // Log the Supabase configuration for debugging
 console.log("Supabase URL:", supabaseUrl ? "Configured" : "Missing");
