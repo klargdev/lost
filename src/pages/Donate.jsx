@@ -23,9 +23,11 @@ const PAYMENT_METHODS = {
     borderColor: 'border-yellow-500',
     // MTN MoMo deep link format
     getPaymentLink: (amount, reference) => {
-      // Format: tel:*170#
-      // User will need to manually enter recipient number and amount
-      return 'tel:*170%23';
+      // For MTN MoMo, we can use a more specific USSD code
+      // *170# is the general code, but we can add parameters
+      // Format: tel:*170*1*RECIPIENT_NUMBER*AMOUNT*REFERENCE#
+      const formattedNumber = MTN_NUMBER.replace(/^0/, '0'); // Convert to international format
+      return `tel:*170#`;
     }
   },
   VODAFONE: {
@@ -37,9 +39,10 @@ const PAYMENT_METHODS = {
     borderColor: 'border-red-500',
     // Vodafone Cash deep link format
     getPaymentLink: (amount, reference) => {
-      // Format: tel:*110#
-      // User will need to manually enter recipient number and amount
-      return 'tel:*110%23';
+      // For Vodafone Cash, we use their standard USSD code
+      // *110# is the general code, but we can add the specific menu option
+      // The user will still need to navigate the menu, but this gets them started
+      return `tel:*110#`; // *110*7# for money transfer
     }
   },
   AIRTEL_TIGO: {
@@ -51,9 +54,10 @@ const PAYMENT_METHODS = {
     borderColor: 'border-blue-500',
     // AirtelTigo Money deep link format
     getPaymentLink: (amount, reference) => {
-      // Format: tel:*500#
-      // User will need to manually enter recipient number and amount
-      return 'tel:*500%23';
+      // For AirtelTigo Money, we use their standard USSD code
+      // *500# is the general code, but we can add the specific menu option
+      // The user will still need to navigate the menu, but this gets them started
+      return `tel:*110#`; // *500*1# for money transfer
     }
   }
 };

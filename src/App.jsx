@@ -18,7 +18,7 @@ import GalleryManagement from "./pages/admin/GalleryManagement";
 import GuestbookModeration from "./pages/admin/GuestbookModeration";
 
 // Supabase imports
-import { ensureStorageBucketExists } from "./lib/supabase";
+import { content } from "./lib/supabase";
 
 // Subtle floral background pattern
 const FloralPattern = () => (
@@ -40,16 +40,16 @@ function App() {
   useEffect(() => {
     const initializeStorage = async () => {
       try {
-        console.log("Initializing Supabase storage...");
-        const { success, error } = await ensureStorageBucketExists();
+        console.log("Initializing gallery...");
+        const { error } = await content.gallery.initializeBucket();
         
-        if (success) {
-          console.log("Supabase storage initialized successfully");
+        if (error) {
+          console.error("Failed to initialize gallery:", error);
         } else {
-          console.error("Failed to initialize Supabase storage:", error);
+          console.log("Gallery initialized successfully");
         }
       } catch (error) {
-        console.error("Error initializing Supabase storage:", error);
+        console.error("Error initializing gallery:", error);
       }
     };
     

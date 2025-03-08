@@ -1,12 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Hardcoded Supabase credentials (for development only)
+// Hardcoded configuration for development
 const supabaseUrl = 'https://szhvcthgozkfttnhzbqt.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN6aHZjdGhnb3prZnR0bmh6YnF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDk4MzA3NzYsImV4cCI6MjAyNTQwNjc3Nn0.Nh83ebqzf9Yt_1iHLJckxbv-R4QgbqGGlgcjXYPEL-E';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN6aHZjdGhnb3prZnR0bmh6YnF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzg4NjcyMzcsImV4cCI6MjA1NDQ0MzIzN30.yWN2AztrkTocthC4zjFQc3SivLqhl4b5s-Weg4lb8Lo';
 
 // Log the Supabase configuration for debugging
-console.log("Supabase URL:", supabaseUrl ? "Configured" : "Missing");
-console.log("Supabase Anon Key:", supabaseAnonKey ? "Configured" : "Missing");
+console.log("Supabase URL:", supabaseUrl);
+console.log("Supabase Anon Key length:", supabaseAnonKey?.length || 'Missing');
 
 // Create the Supabase client
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
