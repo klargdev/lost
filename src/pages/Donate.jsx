@@ -22,7 +22,7 @@ const PAYMENT_METHODS = {
     bgColor: 'bg-yellow-900',
     borderColor: 'border-yellow-500',
     getPaymentLink: () => {
-      return `tel:*170#`;
+      return String.raw`tel:*170#`;
     }
   },
   VODAFONE: {
@@ -33,7 +33,7 @@ const PAYMENT_METHODS = {
     bgColor: 'bg-red-900',
     borderColor: 'border-red-500',
     getPaymentLink: () => {
-      return `tel:*110#`;
+      return String.raw`tel:*110#`;
     }
   },
   AIRTEL_TIGO: {
@@ -44,7 +44,7 @@ const PAYMENT_METHODS = {
     bgColor: 'bg-blue-900',
     borderColor: 'border-blue-500',
     getPaymentLink: () => {
-      return `tel:*500#`;
+      return String.raw`tel:*500#`;
     }
   }
 };
